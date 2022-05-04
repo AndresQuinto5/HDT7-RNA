@@ -68,3 +68,7 @@ test$prediccionWeka<-predict(modelo.bp, newdata = test[,1:33])
 cfmWeka<-confusionMatrix(test$prediccionWeka,test$y)
 cfmWeka
 ```
+Con un modelo de redes neuronales por RWEKA con 32 nodos, se ha obtenido un porcenaje de 97% de acierto. En este modelo, como se puede ver en la matriz de confusión, se han clasificado incorrectamente 6 casas económicas y 8 casas intermedias, por lo que su capacidad de predicción parece ser muy buena. Cabe mencionar que a diferencia del anterior (nnet) el tiempo de entrenamiento fue un poco más tardado, pero esto se puede ver reflejado en un aumento en el porcentaje de acierto.
+
+En comparación de los dos métodos anteriores con distintas topologías, se puede ver una mejora en la red realizada por RWEKA, como dicho en el análisis de nnet, se notó que la predicción se limitó principalmente a clasificar las casas como económicas, parece que el algoritmo aprendió patrones que no se pueden generalizar tanto, lo cual se vio evidenciado en el resultado de clasificación, por el otro lado, por RWEKA se puede observar que ya no sucede este mismo, ahora la predicción clasifica correctamente más casas, por lo que el porcentaje de error disminuye considerablemente.
+
