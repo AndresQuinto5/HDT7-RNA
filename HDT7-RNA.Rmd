@@ -1,8 +1,12 @@
 ---
-title: "HDT7-rna Redes neuronales"
-author: "AndresQuinto 18288, MirkaNicolle 18139, OscarDeLeon 19298"
-date: "05/04/2022"
-output: html_document
+title: "HDT7 - RNA"
+author: "Andres Quinto, Mirka Monzon, Oscar De Leon"
+date: "3/05/2022"
+output: 
+  html_document:
+    code_folding: hide
+    word_document: default
+    pdf_document: default
 ---
 
 
@@ -11,11 +15,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 library(caret)
 library(nnet)
-#install.packages("RWeka")
-#library(RWeka)
+install.packages("RWeka")
+library(RWeka)
 library(neural)
 library(dummy)
 library(neuralnet)
@@ -29,13 +33,13 @@ library(tidyverse)
 ```
 
 
-# Hoja de Trabajo No. 8: Redes neuronales
+# Hoja de Trabajo No. 7.2: Redes neuronales
 
 En esta hoja de trabajo se busca poder clasificar una casa según su precio de venta, dividiendoló en 3 grupos; económicas, intermedias y caras. con el fin de poder realizar esta predicción se utilizará redes neuronales para evaluar cuál método ofrece el mejor resultado. Los algoritmos de RNA son capaces de aprender modicándose automáticamente a sí mismos y automatizando sus funciones, son bastante complejos, pero esto permite que la predicción sea certera.
 
 Primero es necesario cargar los datos, colocar los rangos y realizar el corte para tener un conjunto de entrenamiento y otro de prueba
 
-```{r data, echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 datosCasas <- read.csv("train.csv")
 
 porciento <- 70/100
@@ -55,7 +59,7 @@ Primero se utilizará el modelo de redes neuronales por nnet:
 
 ## Modelo con redes neuronales por nnet:
 
-```{r nnet clasificación, echo=FALSE}
+```{r nnet clasificación, echo=FALSE, message=FALSE, warning=FALSE}
 modelo.nn2 <- nnet(datos$y~.,data = datos,subset = trainRowsNumber, size=2, rang=0.1,
                    decay=5e-4, maxit=200) 
 prediccion2 <- as.data.frame(predict(modelo.nn2, newdata = test[,1:33]))
@@ -71,7 +75,7 @@ Ahora se utilizará el modelo por RWEKA
 
 ## Modelo con redes neuronales por RWeka
 
-```{r Rweka clasificación, echo=FALSE}
+```{r Rweka clasificación, echo=FALSE, message=FALSE, warning=FALSE}
 NB <- make_Weka_classifier("weka/classifiers/functions/MultilayerPerceptron")
 NB 
 WOW(NB)
@@ -87,7 +91,7 @@ En comparación de los dos métodos anteriores con distintas topologías, se pue
 
 
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 datos$clasificacion <- factor(datos$y)
 datos$y <- factor(datos$SalePrice)
 drop <- c("SalePrice")
@@ -108,7 +112,7 @@ test = test[,!(names(test) %in% drop3)]
 ```
 
 
-```{r nnet clasificación, echo=FALSE}
+```{r nnet clasificación, echo=FALSE, message=FALSE, warning=FALSE}
 modelo.nn3 <- nnet(train$y~.,data = train, subset = trainRowsNumber2, size=2, rang=0.1,
                    decay=5e-4, maxit=200) 
 prediccion3 <- as.data.frame(predict(modelo.nn3, newdata = test[,1:33]))
@@ -123,7 +127,7 @@ cfm
 Como se puede observar en los resultados la precision de la red neuronal nnet es muy baja obteniendo tan solo 0.0046, su capacidad para predecir precios de venta fue mala. 
 
 
-```{r Rweka clasificación, echo=FALSE}
+```{r Rweka clasificación, echo=FALSE, message=FALSE, warning=FALSE}
 NB2 <- make_Weka_classifier("weka/classifiers/functions/MultilayerPerceptron")
 NB2 
 WOW(NB2)
@@ -139,3 +143,23 @@ La precision de RWeka en comparacion con nnet obtiene un rendimiento mayor, aume
 En general, el modelo realizado empleando RWeka tuvo un mejor desempeño respecto al objetivo de realizar predicciones de precios de venta de casas. Debido a la reduccion de subset de aprendizaje, la precision en ambos modelos se vio afectada, sin embargo RWeka tuvo mayor capacidad de adaptacion con la limitante. 
 
 
+## Comparacion modelo RNA con algoritmos anteriores
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+modelos_prediccion <- c("Naive Bayes", "Regresion Lineal", "Arbol de Clasificacion", "SVM", "Neural Net(Caret)", "Neural Net(NNet)")
+accuracies <- c(76.69, 70.05, 73.61, 83.99, 85.85, 85.61)
+comparacion_prediccion <- data.frame(modelos_prediccion, accuracies)
+
+fig_1 <- plot_ly(comparacion_prediccion, x = ~modelos_prediccion, y = ~accuracies, type = 'bar', text = paste(signif(accuracies,digits = 4),"%"), textposition = 'auto', name = '')
+fig_1<- fig_1 %>% layout(title="Precision del modelo vs Modelo Aplicado",yaxis = list(title = 'Accuracy(%)'),xaxis = list(title = 'Modelo Aplicado'), barmode = 'group')
+fig_1
+```
+Como podemos ver en la grafica anteriormente presentada, tenemos varios algoritmo, donde se comparo por su accurancy, y en el primer puesto se obtuvo Neurnal Net(caret) y muy de cerca le siguen Neurnal Net(NNET) y SVM.
+Ahora sobre los algortimos para clasificar, tambien podemos ver algunos en la misma grafica anterior, como el arbol de clasificacio, el cual tiene un accurancy de 73.61% el cual es un porcentaje bueno pero no tanto si lo comparamos con las redes neuronales.
+
+## Resultados y explicaciones 
+
+Al comparar los resultados obtenidos con los diferentes modelos de clasificacion usando redes neuronales, podemos ver que RNA realizadas por la librería de Caret fueron las más efectivas con un 85.85% de precision y con una diferencia de 0.24% respecto a las predicciones por la librería NNet con una presicion de 85.61%. No se puede determinar qué modelo es el mejor, pero sí qué modelo nos dio mejores resultados, y fue el modelo de redes neuronales con Caret. Siendo este el modelo más efectivo, hablando del tiempo de ejecución podemos decir que ambos algoritmos demoraron lo mismo. Ahora en comparación con los otros modelos que se realizaron en hojas de trabajo anteriores, podemos también determinar que en esta hoja de trabajo obtuvo los índices de accuracy más altos a los que se ha llegado. Asimismo, se obtuvieron los tiempos de ejecucion mas cortos. 
+En conclusión las redes neuronales fueron mucho más efectivas para realizar la prediccion. Aunque como se menciono anteriormente, no podemos decir con certeza si los otros algoritmos no pueden mejorar su efectividad utilizando otros metodos o mejoras en su algoritmo.
+
+Por ultimo, al comparar los resultados obtenidos con los modelos de clasificacion usando redes neuronales para estimar la variable de respuesta "SalePrice" podemos ver que el modelo de red neuronal realizado con Caret es mas "efectivo" 
