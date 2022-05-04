@@ -10,6 +10,25 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+```{r}
+library(caret)
+library(nnet)
+#install.packages("RWeka")
+#library(RWeka)
+library(neural)
+library(dummy)
+library(neuralnet)
+library(PerformanceAnalytics)
+library(readr)
+library(keras)
+library(plotly)
+library(neuralnet)
+library(MASS)
+library(tidyverse)
+```
+
+
 # Hoja de Trabajo No. 8: Redes neuronales
 
 En esta hoja de trabajo se busca poder clasificar una casa según su precio de venta, dividiendoló en 3 grupos; económicas, intermedias y caras. con el fin de poder realizar esta predicción se utilizará redes neuronales para evaluar cuál método ofrece el mejor resultado. Los algoritmos de RNA son capaces de aprender modicándose automáticamente a sí mismos y automatizando sus funciones, son bastante complejos, pero esto permite que la predicción sea certera.
@@ -18,14 +37,7 @@ Primero es necesario cargar los datos, colocar los rangos y realizar el corte pa
 
 ```{r data, echo=FALSE}
 datosCasas <- read.csv("train.csv")
-library(caret)
-library(nnet)
-#install.packages("RWeka")
-library(RWeka)
-library(neural)
-library(dummy)
-library(neuralnet)
-library(PerformanceAnalytics)
+
 porciento <- 70/100
 set.seed(123)
 datosCasas$clasificacion <- ifelse(datosCasas$SalePrice <= 251000, "Economicas", ifelse(datosCasas$SalePrice <= 538000, "Intermedias", ifelse(datosCasas$SalePrice <= 755000, "Caras")))
@@ -33,6 +45,7 @@ datosCasas$y <- factor(datosCasas$clasificacion)
 datos <- datosCasas[,c(2,4,18,19,20,21,27,35,37,38,39,44,45,46,47,48,49,50,51,52,53,55,57,60,62,63,67,68,69,70,71,72,76,77,78,81,83)]
 datos <- datos[,colSums(is.na(datos))==0]
 trainRowsNumber<-sample(nrow(datos),porciento*nrow(datos))
+trainRowsNumber2<-sample(nrow(datos),45/100*nrow(datos))
 train<-datos[trainRowsNumber,]
 test<-datos[-trainRowsNumber,]
 ```
@@ -71,4 +84,58 @@ cfmWeka
 Con un modelo de redes neuronales por RWEKA con 32 nodos, se ha obtenido un porcenaje de 97% de acierto. En este modelo, como se puede ver en la matriz de confusión, se han clasificado incorrectamente 6 casas económicas y 8 casas intermedias, por lo que su capacidad de predicción parece ser muy buena. Cabe mencionar que a diferencia del anterior (nnet) el tiempo de entrenamiento fue un poco más tardado, pero esto se puede ver reflejado en un aumento en el porcentaje de acierto.
 
 En comparación de los dos métodos anteriores con distintas topologías, se puede ver una mejora en la red realizada por RWEKA, como dicho en el análisis de nnet, se notó que la predicción se limitó principalmente a clasificar las casas como económicas, parece que el algoritmo aprendió patrones que no se pueden generalizar tanto, lo cual se vio evidenciado en el resultado de clasificación, por el otro lado, por RWEKA se puede observar que ya no sucede este mismo, ahora la predicción clasifica correctamente más casas, por lo que el porcentaje de error disminuye considerablemente.
+
+
+
+```{r}
+datos$clasificacion <- factor(datos$y)
+datos$y <- factor(datos$SalePrice)
+drop <- c("SalePrice")
+drop2 <- c("clasificacion")
+drop3 <- c("prediccion2")
+  
+datos = datos[,!(names(datos) %in% drop)]
+datos = datos[,!(names(datos) %in% drop2)]
+train$clasificacion <- factor(train$y)
+train$y <- factor(train$SalePrice)
+train = train[,!(names(train) %in% drop)]
+train = train[,!(names(train) %in% drop2)]
+test$clasificacion <- factor(test$y)
+test$y <- factor(test$SalePrice)
+test = test[,!(names(test) %in% drop)]
+test = test[,!(names(test) %in% drop2)]
+test = test[,!(names(test) %in% drop3)]
+```
+
+
+```{r nnet clasificación, echo=FALSE}
+modelo.nn3 <- nnet(train$y~.,data = train, subset = trainRowsNumber2, size=2, rang=0.1,
+                   decay=5e-4, maxit=200) 
+prediccion3 <- as.data.frame(predict(modelo.nn3, newdata = test[,1:33]))
+columnaMasAlta<-apply(prediccion3, 1, function(x) colnames(prediccion3)[which.max(x)])
+test$prediccion3<-columnaMasAlta 
+#str(test)
+cfm<-confusionMatrix(as.factor(test$prediccion3),test$y)
+cfm
+```
+(Se tuvo que reducir el porcentaje de entrenamiento de modelo debido a limitantes de la libreria)
+
+Como se puede observar en los resultados la precision de la red neuronal nnet es muy baja obteniendo tan solo 0.0046, su capacidad para predecir precios de venta fue mala. 
+
+
+```{r Rweka clasificación, echo=FALSE}
+NB2 <- make_Weka_classifier("weka/classifiers/functions/MultilayerPerceptron")
+NB2 
+WOW(NB2)
+nnodos='33'
+modelo.bp2<-NB2(datos$y~., data=datos,subset = trainRowsNumber2, control=Weka_control(H=nnodos, N=1000, G=TRUE), options=NULL)
+test$prediccionWeka2<-predict(modelo.bp2, newdata = test[,1:33])
+cfmWeka2<-confusionMatrix(test$prediccionWeka2,test$y)
+cfmWeka2
+```
+
+La precision de RWeka en comparacion con nnet obtiene un rendimiento mayor, aumentando su precision y capacidad de realizar predicciones de precio de venta. 
+
+En general, el modelo realizado empleando RWeka tuvo un mejor desempeño respecto al objetivo de realizar predicciones de precios de venta de casas. Debido a la reduccion de subset de aprendizaje, la precision en ambos modelos se vio afectada, sin embargo RWeka tuvo mayor capacidad de adaptacion con la limitante. 
+
 
