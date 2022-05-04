@@ -1,0 +1,39 @@
+---
+title: "HDT7-rna Redes neuronales"
+author: "AndresQuinto 18288, MirkaNicolle 18139, OscarDeLeon 19298"
+date: "05/04/2022"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Hoja de Trabajo No. 8: Redes neuronales
+
+En esta hoja de trabajo se busca poder clasificar una casa según su precio de venta, dividiendoló en 3 grupos; económicas, intermedias y caras. con el fin de poder realizar esta predicción se utilizará redes neuronales para evaluar cuál método ofrece el mejor resultado. Los algoritmos de RNA son capaces de aprender modicándose automáticamente a sí mismos y automatizando sus funciones, son bastante complejos, pero esto permite que la predicción sea certera.
+
+Primero es necesario cargar los datos, colocar los rangos y realizar el corte para tener un conjunto de entrenamiento y otro de prueba
+
+```{r data, echo=FALSE}
+datosCasas <- read.csv("train.csv")
+library(caret)
+library(nnet)
+#install.packages("RWeka")
+library(RWeka)
+library(neural)
+library(dummy)
+library(neuralnet)
+library(PerformanceAnalytics)
+porciento <- 70/100
+set.seed(123)
+datosCasas$clasificacion <- ifelse(datosCasas$SalePrice <= 251000, "Economicas", ifelse(datosCasas$SalePrice <= 538000, "Intermedias", ifelse(datosCasas$SalePrice <= 755000, "Caras")))
+datosCasas$y <- factor(datosCasas$clasificacion)
+datos <- datosCasas[,c(2,4,18,19,20,21,27,35,37,38,39,44,45,46,47,48,49,50,51,52,53,55,57,60,62,63,67,68,69,70,71,72,76,77,78,81,83)]
+datos <- datos[,colSums(is.na(datos))==0]
+trainRowsNumber<-sample(nrow(datos),porciento*nrow(datos))
+train<-datos[trainRowsNumber,]
+test<-datos[-trainRowsNumber,]
+```
+
