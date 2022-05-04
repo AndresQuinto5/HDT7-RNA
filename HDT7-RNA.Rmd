@@ -37,3 +37,34 @@ train<-datos[trainRowsNumber,]
 test<-datos[-trainRowsNumber,]
 ```
 
+Para poder clasificar una casa como económica, inermedia y cara se utilizarán 2 métodos de redes neuronales con distinta topología para poder comparar resultados e identificar difenrencias.
+Primero se utilizará el modelo de redes neuronales por nnet:
+
+## Modelo con redes neuronales por nnet:
+
+```{r nnet clasificación, echo=FALSE}
+modelo.nn2 <- nnet(datos$y~.,data = datos,subset = trainRowsNumber, size=2, rang=0.1,
+                   decay=5e-4, maxit=200) 
+prediccion2 <- as.data.frame(predict(modelo.nn2, newdata = test[,1:33]))
+columnaMasAlta<-apply(prediccion2, 1, function(x) colnames(prediccion2)[which.max(x)])
+test$prediccion2<-columnaMasAlta 
+cfm<-confusionMatrix(as.factor(test$prediccion2),test$y)
+cfm
+```
+
+Utilizando redes neuronales por nnet se obtuvo un porcentaje de acuero de casi 86% en donde, si se observa la matriz de confusión, hubo una equivocación de 2 casas caras y 60 casas intermedias, que a pesar de mostrar un buen porcentaje de predicción, parece ser un número significativo de equivocaciones, cabe mencionar que el modelo solo predijo que las casas eran económicas.
+
+Ahora se utilizará el modelo por RWEKA
+
+## Modelo con redes neuronales por RWeka
+
+```{r Rweka clasificación, echo=FALSE}
+NB <- make_Weka_classifier("weka/classifiers/functions/MultilayerPerceptron")
+NB 
+WOW(NB)
+nnodos='33'
+modelo.bp<-NB(datos$y~., data=datos,subset = trainRowsNumber, control=Weka_control(H=nnodos, N=1000, G=TRUE), options=NULL)
+test$prediccionWeka<-predict(modelo.bp, newdata = test[,1:33])
+cfmWeka<-confusionMatrix(test$prediccionWeka,test$y)
+cfmWeka
+```
